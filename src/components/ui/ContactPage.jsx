@@ -41,8 +41,8 @@ export function ContactPage({ onClose }) {
 
           <div className="cp-left">
             <div className="cp-tag">Get In Touch</div>
-            <h2 className="cp-title">Peachtree Tower</h2>
-            <p className="cp-city">Atlanta, Georgia</p>
+            <h2 className="cp-title">Mumbai Tower</h2>
+            <p className="cp-city">Mumbai, India</p>
             <p className="cp-body">
               Interested in a unit, a tour, or investment opportunities?
               Fill in the form and our team will get back to you within 24 hours.
@@ -50,15 +50,15 @@ export function ContactPage({ onClose }) {
             <div className="cp-details">
               <div className="cp-detail-row">
                 <span className="cp-detail-icon">📍</span>
-                <span>Peachtree St NW, Atlanta, GA 30309</span>
+                <span>G Block, Bandra Kurla Complex, Mumbai 400051</span>
               </div>
               <div className="cp-detail-row">
                 <span className="cp-detail-icon">✉</span>
-                <span>hello@peachtreeatl.com</span>
+                <span>hello@mumbaitower.in</span>
               </div>
               <div className="cp-detail-row">
                 <span className="cp-detail-icon">📞</span>
-                <span>+1 (404) 000-0000</span>
+                <span>+91 22 0000 0000</span>
               </div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export function ContactPage({ onClose }) {
                 <div className="cp-row">
                   <div className="cp-field">
                     <label>Phone</label>
-                    <input type="tel" value={form.phone} onChange={set('phone')} placeholder="+1 (555) 000-0000" />
+                    <input type="tel" value={form.phone} onChange={set('phone')} placeholder="+91 98000 00000" />
                   </div>
                   <div className="cp-field">
                     <label>I'm interested in</label>

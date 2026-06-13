@@ -2,9 +2,9 @@ export function Brand({ onContact }) {
   return (
     <header className="brand">
       <div className="id">
-        <span className="kicker">Midtown · Peachtree St</span>
-        <h1>Peachtree Atlanta</h1>
-        <span className="sub">Mixed-use tower · 14 levels · LEED Platinum</span>
+        <span className="kicker">BKC · Bandra Kurla Complex</span>
+        <h1>Mumbai Tower</h1>
+        <span className="sub">Mixed-use tower · 14 levels · IGBC Platinum</span>
       </div>
       <div className="brand-right">
         <div className="meta">

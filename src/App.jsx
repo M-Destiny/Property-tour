@@ -23,8 +23,8 @@ function LoadingScreen() {
   return (
     <div className={`ls ${!active ? 'ls-out' : ''}`}>
       <div className="ls-inner">
-        <div className="ls-name">Peachtree Tower</div>
-        <div className="ls-sub">Atlanta, Georgia</div>
+        <div className="ls-name">Mumbai Tower</div>
+        <div className="ls-sub">Mumbai, India</div>
         <div className="ls-track"><div className="ls-bar" style={{ width: `${progress}%` }} /></div>
         <div className="ls-pct">{Math.round(progress)}%</div>
       </div>

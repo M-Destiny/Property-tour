@@ -1,6 +1,6 @@
-# Peachtree Tower — Interactive 3D Property Tour
+# Mumbai Tower — Interactive 3D Property Tour
 
-> A fully interactive, browser-based 3D walkthrough of a mixed-use high-rise in Atlanta, Georgia. No app to download. No VR headset required. Just open it in any modern browser and explore.
+> A fully interactive, browser-based 3D walkthrough of a mixed-use high-rise in Mumbai, India. No app to download. No VR headset required. Just open it in any modern browser and explore.
 
 ---
 
@@ -8,7 +8,7 @@
 
 Imagine being able to walk through an apartment, office, or penthouse before it's even built — from anywhere in the world, on any device. That's exactly what this is.
 
-**Peachtree Tower** is a real estate presentation tool that puts a full 14-floor building in your browser. You can orbit around the exterior, click any floor to step inside, walk around the rooms, check the floor plan, and toggle between day, dusk, and night lighting — all in real time, all in 3D.
+**Mumbai Tower** is a real estate presentation tool that puts a full 14-floor building in your browser. You can orbit around the exterior, click any floor to step inside, walk around the rooms, check the floor plan, and toggle between day, dusk, and night lighting — all in real time, all in 3D.
 
 Think of it like Google Street View, but for a building that lives entirely in your browser.
 
@@ -147,7 +147,7 @@ If these files are missing, the app falls back to a procedurally generated build
 ## Project Structure
 
 ```
-peachtree-tour/
+mumbai-tower/
 │
 ├── public/
 │   └── models/              ← 3D model files go here (.glb)
@@ -172,6 +172,7 @@ peachtree-tour/
 │   │       ├── Brand.jsx         ← Logo and building stats in the top bar
 │   │       ├── FloorNav.jsx      ← Floor selector panel (right side)
 │   │       ├── FloorDrawer.jsx   ← Slide-out floor plan + live location dot
+│   │       ├── ContactPage.jsx   ← Contact Us form (submits to Google Sheets)
 │   │       └── WalkPad.jsx       ← On-screen directional pad (touch devices)
 │   │
 │   └── data/
@@ -179,6 +180,7 @@ peachtree-tour/
 │       ├── plans.js         ← SVG architectural floor plan drawings
 │       └── spots.js         ← 5 preset viewpoints per floor plan type, with descriptions
 │
+├── google-apps-script.js    ← Apps Script code to paste into Google Sheets for Contact form
 ├── index.html               ← HTML entry point
 ├── vite.config.js           ← Build tool configuration
 └── package.json             ← Project metadata and dependency list
@@ -259,6 +261,9 @@ A: Edit `src/data/floors.js`. Each floor is a plain JavaScript object with prope
 **Q: How do I change the preset viewpoint positions?**
 A: Edit `src/data/spots.js`. Each spot has `x` and `z` coordinates (horizontal position in the room) and `yaw` (which direction the camera faces, in radians).
 
+**Q: How does the Contact Us form work?**
+A: The form submits to a Google Sheets spreadsheet via Google Apps Script. See `google-apps-script.js` for the server-side code to deploy.
+
 ---
 
 ## Licence
@@ -267,4 +272,4 @@ This project is provided for demonstration and portfolio purposes.
 
 ---
 
-*Built with React 18, Three.js 0.169, and React Three Fiber.*
+*Built with React 18, Three.js 0.169, and React Three Fiber. Located in Bandra Kurla Complex, Mumbai, India.*
