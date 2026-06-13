@@ -8,6 +8,7 @@ import { FloorDrawer } from './components/ui/FloorDrawer.jsx'
 import { WalkPad } from './components/ui/WalkPad.jsx'
 import { FLOORS, N } from './data/floors.js'
 import { SPOTS } from './data/spots.js'
+import { ContactPage } from './components/ui/ContactPage.jsx'
 
 function LoadingScreen() {
   const { progress, active } = useProgress()
@@ -40,6 +41,7 @@ export default function App() {
   const [activeSpot,setActiveSpot]= useState(0)
   const [tod,          setTod]          = useState('day')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [contactOpen,  setContactOpen]  = useState(false)
 
   const camRef     = useRef({ x: 0, z: 0, yaw: -Math.PI / 2 })
   const compassRef = useRef(null)
@@ -89,7 +91,8 @@ export default function App() {
 
   return (
     <div className={`app ${active ? 'is-tour' : ''}`}>
-      <Canvas shadows dpr={[1, 2]} camera={{ fov: 55, position: [120, 60, 120], near: 0.1, far: 2000 }}>
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 55, position: [120, 60, 120], near: 0.1, far: 2000 }}
+        gl={{ antialias: true, toneMappingExposure: 1.1 }}>
         <Experience
           selected={selected} hovered={hovered}
           setSelected={enterFloor} setHovered={setHovered}
@@ -100,7 +103,7 @@ export default function App() {
         />
       </Canvas>
 
-      <Brand />
+      <Brand onContact={() => setContactOpen(true)} />
       <FloorNav selected={selected} onSelect={enterFloor} />
 
       {/* Time-of-day toggle — always visible */}
@@ -206,6 +209,8 @@ export default function App() {
           }
         </svg>
       </button>
+
+      {contactOpen && <ContactPage onClose={() => setContactOpen(false)} />}
 
       <LoadingScreen />
     </div>

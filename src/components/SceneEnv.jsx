@@ -98,7 +98,7 @@ function Tree({ position, scale }) {
   )
 }
 
-export function SceneEnv({ tod = 'day' }) {
+export function SceneEnv({ tod = 'day', inside = false }) {
   const sky    = useMemo(() => makeSkyTexture(tod), [tod])
   const trees  = useMemo(() => Array.from({ length: 26 }).map(() => {
     const a = Math.random() * Math.PI * 2, r = 20 + Math.random() * 16
@@ -109,11 +109,13 @@ export function SceneEnv({ tod = 'day' }) {
 
   return (
     <group>
-      {/* Sky dome — lower poly, same visual */}
-      <mesh>
-        <sphereGeometry args={[900, 16, 8]} />
-        <meshBasicMaterial map={sky} side={THREE.BackSide} depthWrite={false} />
-      </mesh>
+      {/* Sky dome — hidden when inside so it never bleeds through model gaps */}
+      {!inside && (
+        <mesh>
+          <sphereGeometry args={[900, 16, 8]} />
+          <meshBasicMaterial map={sky} side={THREE.BackSide} depthWrite={false} />
+        </mesh>
+      )}
 
       {/* Ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>

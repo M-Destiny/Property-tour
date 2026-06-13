@@ -55,15 +55,20 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     return { pos: tmp.position.clone(), quat: tmp.quaternion.clone() }
   }
 
-  const interiorPose = (floor) => {
-    const fY = floorBottomY(floor)
+  // If a spot is supplied, tween straight to it — eliminates the snap that happened
+  // when we tweened to a generic entry pose then jumped to the spot on arrival.
+  const interiorPose = (floor, spot) => {
+    const fY  = floorBottomY(floor)
     standY.current = fY + 1.6
-    // Face +X into the room from the left-side entry (yaw = -π/2 → look direction = +X)
-    look.current.yaw   = -Math.PI / 2
+    const yaw  = spot?.yaw ?? -Math.PI / 2
+    const posX = spot ? clamp(spot.x, -BOUND_X, BOUND_X) : -BOUND_X * 0.85
+    const posZ = spot ? clamp(spot.z, -BOUND_Z, BOUND_Z) : 0
+    look.current.yaw   = yaw
     look.current.pitch = -0.02
-    const pos = new THREE.Vector3(-BOUND_X * 0.85, fY + 1.6, 0)
+    const pos = new THREE.Vector3(posX, fY + 1.6, posZ)
     tmp.position.copy(pos)
-    tmp.rotation.set(look.current.pitch, look.current.yaw, 0)
+    tmp.rotation.order = 'YXZ'
+    tmp.rotation.set(look.current.pitch, yaw, 0)
     tmp.updateMatrixWorld()
     return { pos, quat: tmp.quaternion.clone() }
   }
@@ -89,7 +94,8 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
   useEffect(() => {
     if (first.current) { first.current = false; if (selected == null) return }
     if (selected != null) {
-      const { pos, quat } = interiorPose(selected)
+      const firstSpot = viewModeRef.current === 'spots' ? (spotsRef.current?.[activeSpotRef.current] ?? spotsRef.current?.[0]) : null
+      const { pos, quat } = interiorPose(selected, firstSpot)
       tween.current = { fromP: camera.position.clone(), toP: pos, fromQ: camera.quaternion.clone(), toQ: quat, t: 0, dur: 1.5, to: 'interior' }
       phase.current = 'toInterior'
     } else {
@@ -176,13 +182,7 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
       if (tw.t >= 1) {
         if (tw.to === 'interior') {
           phase.current = 'interior'
-          // Jump to active spot on arrival if in spots mode
-          if (viewModeRef.current === 'spots' && spotsRef.current?.length > 0) {
-            const spot = spotsRef.current[activeSpotRef.current] ?? spotsRef.current[0]
-            camera.position.set(clamp(spot.x, -BOUND_X, BOUND_X), standY.current, clamp(spot.z, -BOUND_Z, BOUND_Z))
-            look.current.yaw   = spot.yaw
-            look.current.pitch = -0.02
-          }
+          // Camera already landed at spot position — no snap needed
           onEnter && onEnter()
         } else {
           phase.current = 'orbit'; applyOrbit(); onExit && onExit()

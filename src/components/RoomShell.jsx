@@ -1,69 +1,105 @@
 import * as THREE from 'three'
-import { FH, floorBottomY } from '../data/floors.js'
+import { floorBottomY } from '../data/floors.js'
 
-const BX = 13.8, BZ = 4.5
-const W = BX * 2, D = BZ * 2
+// Sky sphere is hidden when inside so no dark gaps — no shell walls needed.
+// This component provides only ceiling, floor, fixtures, and rich interior lights.
 
-// Wall material shared instances — avoid recreating per render
-const WALL_MAT  = new THREE.MeshStandardMaterial({ color: '#e8e4dc', roughness: 0.88 })
-const FLOOR_MAT = new THREE.MeshStandardMaterial({ color: '#c4b080', roughness: 0.72, metalness: 0.02 })
-const CEIL_MAT  = new THREE.MeshStandardMaterial({ color: '#f0ede6', roughness: 0.95 })
-const FIX_MAT   = new THREE.MeshStandardMaterial({ color: '#fffae8', emissive: new THREE.Color('#fffae8'), emissiveIntensity: 3.5, toneMapped: false })
+const CEIL_MAT  = new THREE.MeshStandardMaterial({ color: '#f5f2ec', roughness: 0.90, side: THREE.DoubleSide })
+const FLOOR_MAT = new THREE.MeshStandardMaterial({ color: '#b8a46e', roughness: 0.55, metalness: 0.04 })
+const WALL_MAT  = new THREE.MeshStandardMaterial({ color: '#f0ece4', roughness: 0.85, side: THREE.DoubleSide })
+const FIX_MAT   = new THREE.MeshStandardMaterial({
+  color: '#fff8e8', emissive: new THREE.Color('#fff6d0'),
+  emissiveIntensity: 4.5, toneMapped: false,
+})
+const FIX_GEO = new THREE.BoxGeometry(0.28, 0.04, 1.8)
 
-// Shared geometry instances
-const CEIL_GEO  = new THREE.BoxGeometry(W + 2, 0.3, D + 2)
-const FLOOR_GEO = new THREE.PlaneGeometry(W + 2, D + 2)
-const WALL_H_GEO = new THREE.PlaneGeometry(W + 2, 1)   // height set via scale
-const WALL_D_GEO = new THREE.PlaneGeometry(D + 2, 1)
-const FIX_GEO   = new THREE.BoxGeometry(0.38, 0.06, 1.8)
+// Realistic interior lighting — warm ceiling, cool window fill, soft bounce
+// No pure white: every light has a colour temperature
+const LI = {
+  day: {
+    ceil:   { color: '#ffd080', intensity:  8, dist: 10 },   // warm amber downlight
+    sky:    { color: '#aed4f5', intensity: 10, dist: 30 },   // soft blue daylight from windows
+    bounce: { color: '#f5c97a', intensity:  5, dist: 18 },   // golden bounce off back wall
+    fill:   { color: '#ffe4a0', intensity:  3, dist: 12 },   // very soft floor fill
+  },
+  dusk: {
+    ceil:   { color: '#ff9a30', intensity: 12, dist: 10 },
+    sky:    { color: '#ff5510', intensity:  6, dist: 30 },
+    bounce: { color: '#ff7020', intensity:  7, dist: 18 },
+    fill:   { color: '#ff8840', intensity:  4, dist: 12 },
+  },
+  night: {
+    ceil:   { color: '#ffb830', intensity: 16, dist: 10 },
+    sky:    { color: '#2a3d70', intensity:  4, dist: 30 },
+    bounce: { color: '#ff7010', intensity:  9, dist: 18 },
+    fill:   { color: '#ffaa40', intensity:  5, dist: 12 },
+  },
+}
 
-export function RoomShell({ floor, tod = 'day' }) {
+export function RoomShell({ floor, tod = 'day', aptDims }) {
   const y0    = floorBottomY(floor)
-  const roomH = FH * 0.88
+  const li    = LI[tod] ?? LI.day
+  const roomH = aptDims?.h ?? 2.946
+  const halfW = aptDims ? aptDims.w / 2 : 22.275
+  const halfD = aptDims ? aptDims.d / 2 :  5.611
   const ceilY = y0 + roomH
-  const li    = tod === 'night' ? 40 : tod === 'dusk' ? 32 : 22
+  const fx    = halfW * 0.35
 
   return (
     <group>
-      {/* Ceiling box — solid, no clip-through */}
-      <mesh geometry={CEIL_GEO} material={CEIL_MAT} position={[0, ceilY + 0.15, 0]} receiveShadow />
+      {/* Ceiling — flat plane only, no sides that could appear as walls */}
+      <mesh position={[0, ceilY + 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[halfW * 2 + 0.3, halfD * 2 + 0.3]} />
+        <primitive object={CEIL_MAT} attach="material" />
+      </mesh>
 
-      {/* Ceiling light fixtures */}
-      <mesh geometry={FIX_GEO} material={FIX_MAT} position={[-7, ceilY, 0]} />
-      <mesh geometry={FIX_GEO} material={FIX_MAT} position={[ 0, ceilY, 0]} />
-      <mesh geometry={FIX_GEO} material={FIX_MAT} position={[ 7, ceilY, 0]} />
+      {/* Ceiling light strip fixtures */}
+      {[-fx, 0, fx].map((x) => (
+        <mesh key={x} geometry={FIX_GEO} material={FIX_MAT} position={[x, ceilY - 0.01, 0]} />
+      ))}
 
       {/* Floor */}
-      <mesh geometry={FLOOR_GEO} material={FLOOR_MAT}
-        position={[0, y0 + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow />
-
-      {/* Walls — front-face only (camera always inside, no DoubleSide needed) */}
-      {/* −X wall: plane default +Z normal → rotate Y+90° → faces +X (into room) */}
-      <mesh material={WALL_MAT} position={[-BX, y0 + roomH / 2, 0]}
-        rotation={[0, Math.PI / 2, 0]} scale={[1, roomH, 1]} receiveShadow>
-        <planeGeometry args={[D + 2, 1]} />
-      </mesh>
-      {/* +X wall: rotate Y-90° → faces −X (into room) */}
-      <mesh material={WALL_MAT} position={[BX, y0 + roomH / 2, 0]}
-        rotation={[0, -Math.PI / 2, 0]} scale={[1, roomH, 1]} receiveShadow>
-        <planeGeometry args={[D + 2, 1]} />
-      </mesh>
-      {/* −Z wall: default faces +Z → into room */}
-      <mesh material={WALL_MAT} position={[0, y0 + roomH / 2, -BZ]}
-        scale={[1, roomH, 1]} receiveShadow>
-        <planeGeometry args={[W + 2, 1]} />
-      </mesh>
-      {/* +Z wall: rotate Y180° → faces −Z (into room) */}
-      <mesh material={WALL_MAT} position={[0, y0 + roomH / 2, BZ]}
-        rotation={[0, Math.PI, 0]} scale={[1, roomH, 1]} receiveShadow>
-        <planeGeometry args={[W + 2, 1]} />
+      <mesh position={[0, y0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[halfW * 2 + 0.3, halfD * 2 + 0.3]} />
+        <primitive object={FLOOR_MAT} attach="material" />
       </mesh>
 
-      {/* Interior lights — 3 ceiling fixtures + 1 daylight fill */}
-      <pointLight position={[-7, ceilY - 0.5, 0]} color="#ffe8c8" intensity={li}       distance={18} decay={2} />
-      <pointLight position={[ 0, ceilY - 0.5, 0]} color="#ffe8c8" intensity={li}       distance={18} decay={2} />
-      <pointLight position={[ 7, ceilY - 0.5, 0]} color="#ffe8c8" intensity={li}       distance={18} decay={2} />
-      <pointLight position={[BX - 1, y0 + roomH * 0.55, 0]} color="#cce4ff" intensity={li * 0.35} distance={22} decay={2} />
+      {/* Back wall +X — rotate Y 90° so plane stands in the YZ plane */}
+      <mesh position={[halfW, y0 + roomH / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[halfD * 2, roomH]} />
+        <primitive object={WALL_MAT} attach="material" />
+      </mesh>
+
+      {/* +Z side omitted — camera spawns on this side */}
+
+      {/* Side wall -Z */}
+      <mesh position={[0, y0 + roomH / 2, -halfD]}>
+        <planeGeometry args={[halfW * 2, roomH]} />
+        <primitive object={WALL_MAT} attach="material" />
+      </mesh>
+
+      {/* ── Ceiling downlights (3 warm cones across width) ── */}
+      {[-fx, 0, fx].map((x) => (
+        <pointLight key={x}
+          position={[x, ceilY - 0.45, 0]}
+          color={li.ceil.color} intensity={li.ceil.intensity}
+          distance={li.ceil.dist} decay={2}
+        />
+      ))}
+
+      {/* ── Daylight / sky fill from the glass facade (−X side per GLB) ── */}
+      <pointLight position={[-halfW * 0.5, y0 + roomH * 0.75,  1.5]}
+        color={li.sky.color} intensity={li.sky.intensity} distance={li.sky.dist} decay={1.4} />
+      <pointLight position={[-halfW * 0.5, y0 + roomH * 0.40, -1.5]}
+        color={li.sky.color} intensity={li.sky.intensity * 0.55} distance={li.sky.dist * 0.7} decay={1.4} />
+
+      {/* ── Warm bounce light from solid wall side (+X) ── */}
+      <pointLight position={[halfW * 0.5, y0 + roomH * 0.55, 0]}
+        color={li.bounce.color} intensity={li.bounce.intensity} distance={li.bounce.dist} decay={2} />
+
+      {/* ── Low floor fill — softens harsh ceiling shadows on lower surfaces ── */}
+      <pointLight position={[0, y0 + 0.6, 0]}
+        color={li.fill.color} intensity={li.fill.intensity} distance={li.fill.dist} decay={2} />
     </group>
   )
 }

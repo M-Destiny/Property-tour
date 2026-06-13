@@ -34,30 +34,75 @@ function FloorBand({ index, y, w, d, state, onSelect, onHover }) {
   )
 }
 
-// Real office GLB. Goes translucent (a "ghost silhouette") whenever a floor is
-// active, so you can see the tower's shape around you while standing inside.
 export function OfficeBuilding({ selected, hovered, onSelect, onHover }) {
   const { group, dims } = useCenteredGLTF('/models/office-building.glb', { targetHeight: MODEL_HEIGHT })
-  const ghost = selected !== null
-  const mats = useRef([])
-  const lastGhost = useRef(null)
+  const ghost     = selected !== null
+  const mats      = useRef([])
+  const lastGhost = useRef(null)   // null = uninitialised
 
+  // Collect all unique materials once the GLB is ready
   useEffect(() => {
     const set = new Set()
     group.traverse((o) => {
-      if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.side = THREE.DoubleSide; set.add(m) })
+      if (!o.isMesh) return
+      ;(Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => set.add(m))
     })
     mats.current = [...set]
+
+    // Start fully opaque + front-face culled — correct default for exterior view
+    mats.current.forEach((m) => {
+      m.side        = THREE.FrontSide
+      m.transparent = false
+      m.opacity     = 1
+      m.depthWrite  = true
+      m.needsUpdate = true
+    })
   }, [group])
 
   useFrame((_, dt) => {
-    if (lastGhost.current !== ghost) {
-      lastGhost.current = ghost
-      mats.current.forEach((m) => { m.transparent = true; m.depthWrite = !ghost; m.needsUpdate = true })
-    }
-    const targetOp = ghost ? 0 : 1
+    if (!mats.current.length) return
+
     const k = Math.min(1, dt * 4)
-    mats.current.forEach((m) => { m.opacity += (targetOp - m.opacity) * k })
+
+    if (!ghost) {
+      // ── Fading back IN to fully opaque ──────────────────────────────────
+      if (lastGhost.current !== false) {
+        // Transition start: enable transparency so the fade is visible
+        lastGhost.current = false
+        mats.current.forEach((m) => {
+          m.transparent = true
+          m.depthWrite  = false
+          m.side        = THREE.FrontSide
+          m.needsUpdate = true
+        })
+      }
+
+      mats.current.forEach((m) => { m.opacity += (1 - m.opacity) * k })
+
+      // Once fully opaque, snap back to solid rendering — this is the critical
+      // step that stops the see-through glitch: transparent materials skip the
+      // depth buffer, so we must get back to opaque as soon as the fade ends.
+      if (mats.current[0]?.opacity > 0.995) {
+        mats.current.forEach((m) => {
+          m.opacity     = 1
+          m.transparent = false
+          m.depthWrite  = true
+          m.needsUpdate = true
+        })
+      }
+    } else {
+      // ── Fading OUT to invisible (ghost / inside a floor) ─────────────────
+      if (lastGhost.current !== true) {
+        lastGhost.current = true
+        mats.current.forEach((m) => {
+          m.transparent = true
+          m.depthWrite  = false
+          m.side        = THREE.DoubleSide
+          m.needsUpdate = true
+        })
+      }
+      mats.current.forEach((m) => { m.opacity += (0 - m.opacity) * k })
+    }
   })
 
   const w = dims.width * 1.04
