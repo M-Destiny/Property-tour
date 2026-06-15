@@ -102,7 +102,8 @@ export function Experience({ selected, hovered, setSelected, setHovered, onEnter
         </>
       )}
 
-      {inside && viewMode === 'spots' && (
+      {/* Show hotspot pins in both topview and spots mode */}
+      {inside && (viewMode === 'spots' || viewMode === 'topview') && (
         <RoomHotspots
           spots={spots}
           floorY={floorY + 1.6}

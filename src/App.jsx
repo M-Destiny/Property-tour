@@ -98,6 +98,12 @@ export default function App() {
     else setActiveSpot(Math.min(idx, spots.length - 1))
   }
 
+  // Clicking a spot pin in topview flies the camera down into that spot
+  const handleSpotSelect = (i) => {
+    setActiveSpot(i)
+    if (viewMode === 'topview') setViewMode('spots')
+  }
+
   const currentSpot = inside && viewMode === 'spots' ? spots[activeSpot] : null
 
   return (
@@ -109,7 +115,7 @@ export default function App() {
           setSelected={enterFloor} setHovered={setHovered}
           onEnter={() => setInside(true)} onExit={() => setInside(false)}
           viewMode={viewMode} activeSpot={activeSpot} spots={spots}
-          camRef={camRef} onSpotSelect={setActiveSpot} onSpotKey={handleSpotKey}
+          camRef={camRef} onSpotSelect={handleSpotSelect} onSpotKey={handleSpotKey}
           tod={tod}
         />
       </Canvas>

@@ -59,13 +59,16 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     return { pos: tmp.position.clone(), quat: tmp.quaternion.clone() }
   }
 
-  // Top-down bird's-eye pose — camera directly above floor, looking straight down
+  // Slanted top-down pose — slightly tilted for depth, zoomed closer
   const topviewPose = (floor) => {
-    const fY = floorBottomY(floor)
-    const pos = new THREE.Vector3(0, fY + TOPVIEW_H, 0)
+    const fY  = floorBottomY(floor)
+    const pitch = -1.18          // ~68° down from horizontal (21° from straight down)
+    const yaw   = -Math.PI / 8   // slight rotation for 3D feel
+    // Offset camera back along look-direction inverse so floor center stays in frame
+    const pos = new THREE.Vector3(3, fY + 26, 10)
     tmp.position.copy(pos)
     tmp.rotation.order = 'YXZ'
-    tmp.rotation.set(-Math.PI / 2, 0, 0)
+    tmp.rotation.set(pitch, yaw, 0)
     tmp.updateMatrixWorld()
     return { pos, quat: tmp.quaternion.clone() }
   }
@@ -218,9 +221,9 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     }
 
     if (ph === 'topview') {
-      // Fixed top-down — camera locked looking straight down
+      // Fixed slanted top-down
       camera.rotation.order = 'YXZ'
-      camera.rotation.set(-Math.PI / 2, 0, 0)
+      camera.rotation.set(-1.18, -Math.PI / 8, 0)
       return
     }
 
