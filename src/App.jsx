@@ -10,6 +10,8 @@ import { FLOORS, N } from './data/floors.js'
 import { SPOTS } from './data/spots.js'
 import { ContactPage } from './components/ui/ContactPage.jsx'
 import { WelcomeCard } from './components/ui/WelcomeCard.jsx'
+import { StatsStrip } from './components/ui/StatsStrip.jsx'
+import { FeatureBar } from './components/ui/FeatureBar.jsx'
 
 function LoadingScreen() {
   const { progress, active } = useProgress()
@@ -123,6 +125,10 @@ export default function App() {
           </button>
         ))}
       </div>
+
+      {/* Feature highlights + social proof — exterior only */}
+      {!active && <FeatureBar />}
+      {!active && <StatsStrip />}
 
       {!active && (
         <div className="hint">
