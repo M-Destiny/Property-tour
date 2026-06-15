@@ -6,7 +6,7 @@ import { floorBottomY } from '../data/floors.js'
 
 const CEIL_MAT  = new THREE.MeshStandardMaterial({ color: '#f5f2ec', roughness: 0.90, side: THREE.FrontSide })
 const FLOOR_MAT = new THREE.MeshStandardMaterial({ color: '#b8a46e', roughness: 0.55, metalness: 0.04 })
-const WALL_MAT  = new THREE.MeshStandardMaterial({ color: '#f0ece4', roughness: 0.85, side: THREE.FrontSide })
+const WALL_MAT  = new THREE.MeshStandardMaterial({ color: '#f0ece4', roughness: 0.85, side: THREE.DoubleSide })
 const FIX_MAT   = new THREE.MeshStandardMaterial({
   color: '#fff8e8', emissive: new THREE.Color('#fff6d0'),
   emissiveIntensity: 4.5, toneMapped: false,
