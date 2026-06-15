@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { FLOORS } from '../../data/floors.js'
 
+const STATUS_COLOR = { available: '#4caf7d', reserved: '#e0a020', sold: '#e05050' }
+const STATUS_LABEL = { available: 'Available', reserved: 'Reserved', sold: 'Sold' }
+
 export function FloorNav({ selected, onSelect }) {
   const refs = useRef([])
 
@@ -13,7 +16,6 @@ export function FloorNav({ selected, onSelect }) {
   return (
     <nav className="nav">
       <div className="nav-head">Floor directory ↑</div>
-      {/* render top-to-bottom visually via column-reverse in CSS */}
       {FLOORS.map((f, i) => (
         <button
           key={i}
@@ -22,11 +24,19 @@ export function FloorNav({ selected, onSelect }) {
           onClick={() => onSelect(i)}
         >
           <span className="fnum">{f.n}</span>
-          <span>
+          <span className="fname-wrap">
             <span className="fname">{f.name}</span>
             <span className="fuse">{f.use}</span>
           </span>
-          <span className="farea">{f.area} sf</span>
+          <span className="fnav-right">
+            <span className="farea">{f.area} sf</span>
+            {f.status && (
+              <span className="fstatus" style={{ color: STATUS_COLOR[f.status] }}>
+                <span className="fstatus-dot" style={{ background: STATUS_COLOR[f.status] }} />
+                {STATUS_LABEL[f.status]}
+              </span>
+            )}
+          </span>
         </button>
       ))}
     </nav>

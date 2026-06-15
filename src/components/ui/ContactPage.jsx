@@ -4,8 +4,10 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJ4vsN2HZMoHL_
 
 const INITIAL = { name: '', email: '', phone: '', interest: '', message: '' }
 
-export function ContactPage({ onClose }) {
-  const [form, setForm]     = useState(INITIAL)
+export function ContactPage({ onClose, prefillFloor }) {
+  const [form, setForm]     = useState(() => prefillFloor
+    ? { ...INITIAL, interest: prefillFloor }
+    : INITIAL)
   const [status, setStatus] = useState('idle')
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))

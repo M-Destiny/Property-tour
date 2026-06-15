@@ -61,6 +61,16 @@ export function FloorDrawer({ floor, open, onClose, onEnter, inTour, camRef }) {
                 </div>
               ))}
             </div>
+            {f.price && f.price !== '—' && (
+              <div className="dr-price-row">
+                <span className="dr-price">{f.price}</span>
+                {f.status && (
+                  <span className={`dr-status dr-status--${f.status}`}>
+                    {f.status === 'available' ? '● Available' : f.status === 'reserved' ? '● Reserved' : '● Sold'}
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="plan-wrap">
               <span className="plan-tag">Architectural plan · 1:100</span>

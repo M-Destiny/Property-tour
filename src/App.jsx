@@ -9,6 +9,7 @@ import { WalkPad } from './components/ui/WalkPad.jsx'
 import { FLOORS, N } from './data/floors.js'
 import { SPOTS } from './data/spots.js'
 import { ContactPage } from './components/ui/ContactPage.jsx'
+import { WelcomeCard } from './components/ui/WelcomeCard.jsx'
 
 function LoadingScreen() {
   const { progress, active } = useProgress()
@@ -42,6 +43,8 @@ export default function App() {
   const [tod,          setTod]          = useState('day')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [contactOpen,  setContactOpen]  = useState(false)
+  const [contactPrefill, setContactPrefill] = useState('')
+  const [welcomeKey,   setWelcomeKey]   = useState(0)
 
   const camRef     = useRef({ x: 0, z: 0, yaw: -Math.PI / 2 })
   const compassRef = useRef(null)
@@ -74,6 +77,12 @@ export default function App() {
 
   const enterFloor = (i) => {
     setPlanOpen(false); setSelected(i); setActiveSpot(0); setViewMode('spots')
+    setWelcomeKey(k => k + 1)
+  }
+
+  const openEnquire = (floorName) => {
+    setContactPrefill(floorName)
+    setContactOpen(true)
   }
   const exit = () => { setPlanOpen(false); setSelected(null) }
 
@@ -210,7 +219,23 @@ export default function App() {
         </svg>
       </button>
 
-      {contactOpen && <ContactPage onClose={() => setContactOpen(false)} />}
+      {/* Welcome card — shown when first entering a floor */}
+      {inside && f && (
+        <WelcomeCard
+          key={welcomeKey}
+          floor={f}
+          onEnquire={() => openEnquire(f.name)}
+        />
+      )}
+
+      {/* Floating enquire CTA — persistent inside a floor */}
+      {inside && f && (
+        <button className="enquire-fab" onClick={() => openEnquire(f.name)}>
+          Enquire about this floor
+        </button>
+      )}
+
+      {contactOpen && <ContactPage onClose={() => { setContactOpen(false); setContactPrefill('') }} prefillFloor={contactPrefill} />}
 
       <LoadingScreen />
     </div>
