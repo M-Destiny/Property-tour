@@ -61,17 +61,25 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     return { pos: tmp.position.clone(), quat: tmp.quaternion.clone() }
   }
 
-  // Slanted top-down pose — uses live tvH and tvPitch refs for scroll zoom / drag tilt
+  // Compute camera XZ so it always aims at floor center (0, fY+1, 0)
+  const tvPos = (fY) => {
+    const h = tvH.current
+    const p = tvPitch.current
+    // Look direction components (YXZ: pitch then yaw)
+    const dx = -Math.sin(TOPVIEW_YAW) * Math.cos(p)
+    const dy =  Math.sin(p)               // negative
+    const dz = -Math.cos(TOPVIEW_YAW) * Math.cos(p)
+    // Ray from camera hits target y = fY + 1
+    const t  = (fY + 1 - (fY + h)) / dy  // positive: (1-h)/sin(p)
+    return new THREE.Vector3(-dx * t, fY + h, -dz * t)
+  }
+
   const topviewPose = (floor) => {
     const fY  = floorBottomY(floor)
-    const h   = tvH.current
-    const p   = tvPitch.current
-    // Offset Z so floor center stays in frame as tilt changes
-    const zOff = h * Math.tan(Math.PI / 2 + p) * 0.55
-    const pos  = new THREE.Vector3(2, fY + h, clamp(zOff, 4, 28))
+    const pos = tvPos(fY)
     tmp.position.copy(pos)
     tmp.rotation.order = 'YXZ'
-    tmp.rotation.set(p, TOPVIEW_YAW, 0)
+    tmp.rotation.set(tvPitch.current, TOPVIEW_YAW, 0)
     tmp.updateMatrixWorld()
     return { pos, quat: tmp.quaternion.clone() }
   }
@@ -168,9 +176,6 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
       } else if (phase.current === 'interior') {
         look.current.yaw  -= dx * 0.0042
         look.current.pitch = clamp(look.current.pitch - dy * 0.0042, -0.9, 0.78)
-      } else if (phase.current === 'topview') {
-        // Vertical drag tilts the camera
-        tvPitch.current = clamp(tvPitch.current + dy * 0.004, -1.45, -0.3)
       }
     }
     const up = () => { dragging.current = false }
@@ -240,14 +245,11 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     }
 
     if (ph === 'topview') {
-      // Live-update position and rotation from scroll/drag refs
       const fl = selectedRef.current
       if (fl != null) {
-        const fY   = floorBottomY(fl)
-        const h    = tvH.current
-        const p    = tvPitch.current
-        const zOff = clamp(h * Math.tan(Math.PI / 2 + p) * 0.55, 4, 28)
-        camera.position.set(2, fY + h, zOff)
+        const fY = floorBottomY(fl)
+        const p  = tvPos(fY)
+        camera.position.copy(p)
       }
       camera.rotation.order = 'YXZ'
       camera.rotation.set(tvPitch.current, TOPVIEW_YAW, 0)
