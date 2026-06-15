@@ -70,7 +70,11 @@ export function RoomShell({ floor, tod = 'day', aptDims }) {
         <primitive object={WALL_MAT} attach="material" />
       </mesh>
 
-      {/* +Z side omitted — camera spawns on this side */}
+      {/* Side wall +Z */}
+      <mesh position={[0, y0 + roomH / 2, halfD]}>
+        <planeGeometry args={[halfW * 2, roomH]} />
+        <primitive object={WALL_MAT} attach="material" />
+      </mesh>
 
       {/* Side wall -Z */}
       <mesh position={[0, y0 + roomH / 2, -halfD]}>

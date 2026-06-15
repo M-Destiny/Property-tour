@@ -120,12 +120,23 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     }
   }, [selected]) // eslint-disable-line
 
-  // viewMode change: topview → spots/freeroam triggers fly-down into room
+  // viewMode change: handle topview ↔ interior transitions
   useEffect(() => {
-    if (viewMode === 'topview') return
-    if (phase.current !== 'topview') return
     const fl = selectedRef.current
     if (fl == null) return
+
+    if (viewMode === 'topview') {
+      // Returning to top view from interior
+      if (phase.current === 'interior' || phase.current === 'toInterior') {
+        const { pos, quat } = topviewPose(fl)
+        tween.current = { fromP: camera.position.clone(), toP: pos, fromQ: camera.quaternion.clone(), toQ: quat, t: 0, dur: 1.3, to: 'topview' }
+        phase.current = 'toTopview'
+      }
+      return
+    }
+
+    // topview → spots/freeroam: fly down into room
+    if (phase.current !== 'topview') return
     const firstSpot = viewMode === 'spots' ? (spotsRef.current?.[activeSpotRef.current] ?? spotsRef.current?.[0]) : null
     const { pos, quat } = interiorPose(fl, firstSpot)
     tween.current = { fromP: camera.position.clone(), toP: pos, fromQ: camera.quaternion.clone(), toQ: quat, t: 0, dur: 1.3, to: 'interior' }
