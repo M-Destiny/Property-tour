@@ -78,7 +78,7 @@ export default function App() {
   }, [inside])
 
   const enterFloor = (i) => {
-    setPlanOpen(false); setSelected(i); setActiveSpot(0); setViewMode('spots')
+    setPlanOpen(false); setSelected(i); setActiveSpot(0); setViewMode('topview')
     setWelcomeKey(k => k + 1)
   }
 
@@ -139,7 +139,7 @@ export default function App() {
       )}
 
       {/* Spot rail */}
-      {inside && viewMode === 'spots' && spots.length > 0 && (
+      {inside && viewMode === 'spots' && spots.length > 0 && viewMode !== 'topview' && (
         <div className="spot-rail">
           {spots.map((sp, i) => (
             <button key={i} className={`spot-card ${i === activeSpot ? 'active' : ''}`}
@@ -167,7 +167,8 @@ export default function App() {
             <span className="it">{f.name}</span>
             <span className="is">
               {!inside ? 'Flying in…'
-                : viewMode === 'spots' ? 'Press 1–5 · ← → to cycle spots · drag to look'
+                : viewMode === 'topview'  ? 'Bird\'s-eye view · click Spots or Free Roam to step inside'
+                : viewMode === 'spots'    ? 'Press 1–5 · ← → to cycle spots · drag to look'
                 : 'W A S D / arrows to walk · drag to look'}
             </span>
           </div>
@@ -175,8 +176,9 @@ export default function App() {
             <button className="ibtn" onClick={exit}>◀ Back</button>
             {inside && (
               <div className="mode-toggle">
-                <button className={`ibtn ${viewMode === 'spots'   ? 'solid' : ''}`} onClick={() => setViewMode('spots')}>Spots</button>
-                <button className={`ibtn ${viewMode === 'freeroam'? 'solid' : ''}`} onClick={() => setViewMode('freeroam')}>Free Roam</button>
+                <button className={`ibtn ${viewMode === 'topview'  ? 'solid' : ''}`} onClick={() => setViewMode('topview')}>Top View</button>
+                <button className={`ibtn ${viewMode === 'spots'    ? 'solid' : ''}`} onClick={() => setViewMode('spots')}>Spots</button>
+                <button className={`ibtn ${viewMode === 'freeroam' ? 'solid' : ''}`} onClick={() => setViewMode('freeroam')}>Free Roam</button>
               </div>
             )}
             <button className="ibtn" onClick={() => setPlanOpen(true)}>Floor Plan</button>
@@ -185,8 +187,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Compass */}
-      {inside && (
+      {/* Compass — only in first-person modes */}
+      {inside && viewMode !== 'topview' && (
         <div className="compass">
           <svg width="44" height="44" viewBox="0 0 44 44" className="compass-bg">
             <circle cx="22" cy="22" r="20" fill="rgba(14,17,22,0.88)" stroke="#2A323D" strokeWidth="1.5"/>
@@ -234,8 +236,8 @@ export default function App() {
         />
       )}
 
-      {/* Floating enquire CTA — persistent inside a floor */}
-      {inside && f && (
+      {/* Floating enquire CTA — shown in first-person only */}
+      {inside && f && viewMode !== 'topview' && (
         <button className="enquire-fab" onClick={() => openEnquire(f.name)}>
           Enquire about this floor
         </button>
