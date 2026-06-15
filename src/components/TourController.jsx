@@ -10,8 +10,8 @@ const tmp = new THREE.Object3D()
 tmp.rotation.order = 'YXZ'
 
 const BOUND_X = 13.5, BOUND_Z = 4.2
-// Camera height above floor for the top-down overview
-const TOPVIEW_H = 42
+const TOPVIEW_PITCH = -0.72   // ~41° from horizontal — noticeably slanted
+const TOPVIEW_YAW   = -Math.PI / 5
 
 export function TourController({ selected, onEnter, onExit, viewMode, activeSpot, spots, camRef, onSpotKey }) {
   const { camera, gl } = useThree()
@@ -21,6 +21,8 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
   const standY      = useRef(BASE_Y + 1.6)
   const tween       = useRef(null)
   const spotTween   = useRef(null)
+  const tvH         = useRef(14)   // topview zoom height — scroll to change
+  const tvPitch     = useRef(TOPVIEW_PITCH)
   const dragging    = useRef(false)
   const last        = useRef({ x: 0, y: 0 })
   const keys        = useRef({})
@@ -59,16 +61,17 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     return { pos: tmp.position.clone(), quat: tmp.quaternion.clone() }
   }
 
-  // Slanted top-down pose — slightly tilted for depth, zoomed closer
+  // Slanted top-down pose — uses live tvH and tvPitch refs for scroll zoom / drag tilt
   const topviewPose = (floor) => {
     const fY  = floorBottomY(floor)
-    const pitch = -1.18          // ~68° down from horizontal (21° from straight down)
-    const yaw   = -Math.PI / 8   // slight rotation for 3D feel
-    // Offset camera back along look-direction inverse so floor center stays in frame
-    const pos = new THREE.Vector3(3, fY + 26, 10)
+    const h   = tvH.current
+    const p   = tvPitch.current
+    // Offset Z so floor center stays in frame as tilt changes
+    const zOff = h * Math.tan(Math.PI / 2 + p) * 0.55
+    const pos  = new THREE.Vector3(2, fY + h, clamp(zOff, 4, 28))
     tmp.position.copy(pos)
     tmp.rotation.order = 'YXZ'
-    tmp.rotation.set(pitch, yaw, 0)
+    tmp.rotation.set(p, TOPVIEW_YAW, 0)
     tmp.updateMatrixWorld()
     return { pos, quat: tmp.quaternion.clone() }
   }
@@ -165,8 +168,10 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
       } else if (phase.current === 'interior') {
         look.current.yaw  -= dx * 0.0042
         look.current.pitch = clamp(look.current.pitch - dy * 0.0042, -0.9, 0.78)
+      } else if (phase.current === 'topview') {
+        // Vertical drag tilts the camera
+        tvPitch.current = clamp(tvPitch.current + dy * 0.004, -1.45, -0.3)
       }
-      // topview: no drag interaction
     }
     const up = () => { dragging.current = false }
     const wheel = (e) => {
@@ -174,6 +179,9 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
       if (phase.current === 'orbit') {
         orbit.current.radius = clamp(orbit.current.radius * (1 + e.deltaY * 0.001), 45, 400)
         applyOrbit()
+      } else if (phase.current === 'topview') {
+        // Scroll zooms in/out by adjusting height
+        tvH.current = clamp(tvH.current * (1 + e.deltaY * 0.0008), 6, 40)
       }
     }
     const kd = (e) => {
@@ -232,9 +240,17 @@ export function TourController({ selected, onEnter, onExit, viewMode, activeSpot
     }
 
     if (ph === 'topview') {
-      // Fixed slanted top-down
+      // Live-update position and rotation from scroll/drag refs
+      const fl = selectedRef.current
+      if (fl != null) {
+        const fY   = floorBottomY(fl)
+        const h    = tvH.current
+        const p    = tvPitch.current
+        const zOff = clamp(h * Math.tan(Math.PI / 2 + p) * 0.55, 4, 28)
+        camera.position.set(2, fY + h, zOff)
+      }
       camera.rotation.order = 'YXZ'
-      camera.rotation.set(-1.18, -Math.PI / 8, 0)
+      camera.rotation.set(tvPitch.current, TOPVIEW_YAW, 0)
       return
     }
 
